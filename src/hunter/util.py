@@ -11,6 +11,7 @@ from datetime import date
 from datetime import datetime
 from datetime import time
 from datetime import timedelta
+from decimal import Decimal
 from inspect import CO_VARARGS
 from inspect import CO_VARKEYWORDS
 from inspect import getattr_static
@@ -191,7 +192,7 @@ def safe_repr(obj, maxdepth=5):
             )
         else:
             return 're.compile(%s)' % safe_repr(obj.pattern)
-    elif obj_type in (date, timedelta):
+    elif obj_type in (date, timedelta, Decimal):
         return repr(obj)
     elif obj_type is datetime:
         return '%s(%d, %d, %d, %d, %d, %d, %d, tzinfo=%s%s)' % (
