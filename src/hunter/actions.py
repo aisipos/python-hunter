@@ -257,7 +257,8 @@ class ColorStreamAction(Action):
         Returns: string
         """
         if event:
-            filename = event.filename
+            # filename = event.filename
+            filename = event.function
             if filename == '?':
                 filename = '{SOURCE-FAILURE}?'.format(**self.other_colors)
             lineno = '{COLON}:{LINENO}{:<5}'.format(event.lineno, **self.other_colors)
