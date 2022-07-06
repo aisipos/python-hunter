@@ -562,6 +562,11 @@ class VarsPrinter(ColorStreamAction):
         repr_func (string or callable): Function to use instead of ``repr``.
             If string must be one of 'repr' or 'safe_repr'. Default: ``'safe_repr'``.
     """
+    locals = defaultdict(list)
+
+    @classmethod
+    def cleanup(cls):
+        cls.locals = defaultdict(list)
 
     def __init__(self, *names, **options):
         if not names:
@@ -576,6 +581,11 @@ class VarsPrinter(ColorStreamAction):
         """
         Handle event and print the specified variables.
         """
+        ident = event.module, event.function
+
+        thread = threading.current_thread()
+        stack = self.locals[thread.ident]
+
         first = True
 
         frame_symbols = set(event.locals)
@@ -600,11 +610,12 @@ class VarsPrinter(ColorStreamAction):
             if frame_symbols >= symbols:
                 if first:
                     self.output(
-                        '{}{}{}{KIND}{:9} {VARS}[{VARS-NAME}{} {VARS}=> {RESET}{}{VARS}]{RESET}\n',
+                        '{}{}{}{KIND}{}{:9} {VARS}[{VARS-NAME}{} {VARS}=> {RESET}{}{VARS}]{RESET}\n',
                         pid_prefix,
                         thread_prefix,
                         filename_prefix,
                         event.kind,
+                        '   ' * (event.depth),
                         code,
                         printout,
                     )
@@ -666,22 +677,24 @@ class VarsSnooper(ColorStreamAction):
                 scope[name] = current_repr
                 if first:
                     self.output(
-                        '{}{}{}{KIND}{:9} {VARS}[{VARS-NAME}{} {VARS}:= {RESET}{}{VARS}]{RESET}\n',
+                        '{}{}{}{KIND}{}{:9} {VARS}[{VARS-NAME}{} {VARS}:= {RESET}{}{VARS}]{RESET}\n',
                         pid_prefix,
                         thread_prefix,
                         filename_prefix,
                         event.kind,
+                        '   ' * (event.depth + 1),
                         name,
                         current_repr,
                     )
                     first = False
                 else:
                     self.output(
-                        '{}{}{}{CONT}{:9} {VARS}[{VARS-NAME}{} {VARS}:= {RESET}{}{VARS}]{RESET}\n',
+                        '{}{}{}{CONT}{}{:9} {VARS}[{VARS-NAME}{} {VARS}:= {RESET}{}{VARS}]{RESET}\n',
                         pid_prefix,
                         thread_prefix,
                         empty_filename_prefix,
                         '...',
+                        '   ' * (event.depth + 1),
                         name,
                         current_repr,
                     )
@@ -689,11 +702,12 @@ class VarsSnooper(ColorStreamAction):
                 scope[name] = current_repr
                 if first:
                     self.output(
-                        '{}{}{}{KIND}{:9} {VARS}[{VARS-NAME}{} {VARS}: {RESET}{}{VARS} => {RESET}{}{VARS}]{RESET}\n',
+                        '{}{}{}{KIND}{}{:9} {VARS}[{VARS-NAME}{} {VARS}: {RESET}{}{VARS} => {RESET}{}{VARS}]{RESET}\n',
                         pid_prefix,
                         thread_prefix,
                         filename_prefix,
                         event.kind,
+                        '   ' * (event.depth + 1),
                         name,
                         previous_repr,
                         current_repr,
@@ -701,11 +715,12 @@ class VarsSnooper(ColorStreamAction):
                     first = False
                 else:
                     self.output(
-                        '{}{}{}{CONT}{:9} {VARS}[{VARS-NAME}{} {VARS}: {RESET}{}{VARS} => {RESET}{}{VARS}]{RESET}\n',
+                        '{}{}{}{CONT}{}{:9} {VARS}[{VARS-NAME}{} {VARS}: {RESET}{}{VARS} => {RESET}{}{VARS}]{RESET}\n',
                         pid_prefix,
                         thread_prefix,
                         empty_filename_prefix,
                         '...',
+                        '   ' * (event.depth + 1),
                         name,
                         previous_repr,
                         current_repr,
